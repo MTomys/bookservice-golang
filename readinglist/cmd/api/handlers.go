@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"readinglist/internal/data"
 	"strconv"
+	"time"
 )
 
 func (app *application) healthcheck(w http.ResponseWriter, r *http.Request) {
@@ -23,11 +25,41 @@ func (app *application) healthcheck(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 
+	jsonData = append(jsonData, '\n')
+	w.Header().Set("Content-Type", "application/json")
+
+	w.Write(jsonData)
 }
 
 func (app *application) getCreateBooksHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		fmt.Fprintln(w, "Display a list of the books on the reading list")
+
+		books := []data.Book{
+			{
+				ID:        1,
+				CreatedAt: time.Now(),
+				Title:     "Thus spoke zarathustra",
+				Published: 1912,
+				Pages:     300,
+				Genres:    []string{"Fiction", "Thriller"},
+				Version:   1,
+			},
+			{
+				ID:        2,
+				CreatedAt: time.Now(),
+				Title:     "XD",
+				Published: 2019,
+				Pages:     300,
+				Genres:    []string{"Fiction", "Thriller"},
+				Version:   1,
+			},
+		}
+
+		if err := app.writeJSON(w, http.StatusOK, envelope{"books": books}); err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	if r.Method == http.MethodPost {
@@ -58,7 +90,20 @@ func (app *application) getUpdateDeleteBooksHandler(w http.ResponseWriter, r *ht
 
 func (app *application) getBook(w http.ResponseWriter, r *http.Request) {
 	id := getIdFromRequest(w, r)
-	fmt.Fprintf(w, "Display the details of book with id: %d", id)
+	book := data.Book{
+		ID:        id,
+		CreatedAt: time.Now(),
+		Title:     "Echoes in the darkness",
+		Published: 2019,
+		Pages:     300,
+		Genres:    []string{"Fiction", "Thriller"},
+		Version:   1,
+	}
+
+	if err := app.writeJSON(w, http.StatusOK, envelope{"book": book}); err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (app *application) updateBook(w http.ResponseWriter, r *http.Request) {
